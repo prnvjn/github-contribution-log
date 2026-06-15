@@ -30,7 +30,7 @@ Sorbet is silent when prop/const (T::Props) or attr_reader receive an invalid me
     attr_reader :'left-right'       # should error: Bad attribute name `left-right`
   end
 ```
-  Sorbet should emit a 3501 (BadAttrArg) error on both lines, regardless of # typed: level.
+  Sorbet should emit a 3501 (BadAttrArg) error on both lines, regardless of `# typed`: level.
 
 ### Current Behavior
   - `attr_reader :'foo-bar'` at `# typed: true`: error is reported (validation exists).
@@ -106,18 +106,48 @@ Two targeted changes:
 
 Using UMPIRE framework (adapted):
 
-**Understand:** [Restate the problem]
+**Understand:** prop/const never validates the symbol name passed as first argument. attr_reader validates it but only
+  in `# typed: true files`. Both should error at any strictness level, matching Ruby's runtime behavior.
 
-**Match:** [What similar patterns/solutions exist in the codebase?]
+**Match:** The exact validation logic already exists in `validAttrName()` in `rewriter/util/Util.cc:331`. It checks:
+  non-empty, first char is alpha or _, all chars are alphanumeric or _. The `DuplicateProp` check in `Prop.cc:654` shows
+  the pattern for reporting an error from a `parseProp`-adjacent function: `ctx.beginIndexerError(loc, 
+  core::errors::Rewriter::SomeError)`.
+
 
 **Plan:** [Step-by-step implementation plan]
-1. [Modify file X to do Y]
-2. [Add function Z]
-3. [Update tests]
+  1. core/errors/rewriter.h:6 — Change StrictLevel::True → StrictLevel::False for BadAttrArg:
+  inline constexpr ErrorClass BadAttrArg{3501, StrictLevel::False};
+  2. rewriter/util/Util.cc:329 — Move validAttrName from the anonymous namespace {} into the ASTUtil namespace so it
+  can be called from other files. No logic changes.
+  3. rewriter/util/Util.h — Add the public declaration alongside getAttrName:
+  static bool validAttrName(core::MutableContext ctx, core::LocOffsets loc, core::NameRef name);
+  4. rewriter/Prop.cc:245 — After ret.name = sym->asSymbol(), add the validation call:
+  ret.name = sym->asSymbol();
+  if (!ASTUtil::validAttrName(ctx, sym->loc, ret.name)) {
+      return nullopt;
+  }
+  5. test/testdata/rewriter/attr_bad_string.rb — Add # typed: false cases with hyphens to confirm the attr_reader fix.
+  6. test/testdata/rewriter/prop_bad_name.rb — New test file:
+ ```
+# typed: false
+  class A
+    include T::Props
+    const :'foo-bar', Integer  # error: Bad attribute name `foo-bar`
+    prop :'left-right', String # error: Bad attribute name `left-right`
+  end
+```
+
 
 **Implement:** [Link to your branch/commits as you work]
 
-**Review:** [Self-review checklist - does it follow the project's contribution guidelines?]
+**Review:** 
+  - [ ] Commit message matches project style (imperative, no period — e.g. Report error for invalid prop/attr_reader 
+  method names)
+  - [ ] No new error code needed — reusing BadAttrArg{3501}; check core/errors/rewriter.h to confirm no collision
+  - [ ] Changes to error StrictLevel can introduce new errors in existing # typed: false files — flag this in the PR;
+  Sorbet team will run a one-off check against Stripe's codebase per CONTRIBUTING.md
+  - [ ] Announce intent in Sorbet's #internals Slack channel before opening the PR (per CONTRIBUTING.md)
 
 **Evaluate:** [How will you verify it works?]
 
