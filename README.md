@@ -96,7 +96,7 @@ Root cause 2 — wrong StrictLevel (core/errors/rewriter.h:6)
 Two targeted changes:
   
   1. Lower the error level: Change BadAttrArg from StrictLevel::True to StrictLevel::False. This fixes attr_reader at
-  # typed: false.
+  `# typed: false`.
   2. Add validation to parseProp: Expose validAttrName from its anonymous namespace in Util.cc as a public ASTUtil
   static method, then call it from parseProp after extracting the name. This fixes const/prop at all typed levels.
 
