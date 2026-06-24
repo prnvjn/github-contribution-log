@@ -5,7 +5,7 @@
 **Contribution Number:** [1]  
 **Student:** [Pranav]  
 **Issue:** [[GitHub issue link](https://github.com/sorbet/sorbet/issues/6315)]  
-**Status:** [Phase I]
+**Status:** [Phase III]
 
 ---
 
@@ -139,7 +139,7 @@ Using UMPIRE framework (adapted):
 ```
 
 
-**Implement:** [Link to your branch/commits as you work]
+**Implement:** [Link to your branch/commits as you work](https://github.com/prnvjn/sorbet/tree/fix-issue-6315-invalid-prop-attr-name)
 
 **Review:** 
   - [ ] Commit message matches project style (imperative, no period — e.g. Report error for invalid prop/attr_reader 
@@ -149,44 +149,49 @@ Using UMPIRE framework (adapted):
   Sorbet team will run a one-off check against Stripe's codebase per CONTRIBUTING.md
   - [ ] Announce intent in Sorbet's #internals Slack channel before opening the PR (per CONTRIBUTING.md)
 
-**Evaluate:** [How will you verify it works?]
-
----
 
 ## Testing Strategy
+ Added two new test files under test/testdata/rewriter/:
+- attr_bad_string_false.rb — verifies attr_reader/attr_writer/attr_accessor/attr with hyphenated symbol names produce BadAttrArg errors at # typed: false
+- prop_bad_name.rb — verifies const :'foo-bar' and prop :'left-right' produce BadAttrArg errors at # typed: false
 
-### Unit Tests
-
-- [ ] Test case 1: [Description]
-- [ ] Test case 2: [Description]
-- [ ] Test case 3: [Description]
-
-### Integration Tests
-
-- [ ] Integration scenario 1
-- [ ] Integration scenario 2
+All three relevant test targets pass: attr_bad_string, attr_bad_string_false, prop_bad_name. Manually verified the original reproduction case now produces 2 errors instead of 0.
 
 ### Manual Testing
+Ran the original reproduction case from the issue directly against the built binary:
+ ```bazel-bin/main/sorbet -e "# typed: false
+  class A
+   include T::Props
+   const :'foo-bar', Integer
+   attr_reader :'left-right'
+  end"
+```
+Before fix: 0 errors. 
 
-[What you tested manually and results]
+After fix: 2 errors reported 
+
+ - Bad attribute name \foo-bar`on theconst` line
+ - Bad attribute name \left-right`on theattr_reader` line
+
+Confirmed both errors fire at # typed: false, which was the core bug.
 
 ---
 
 ## Implementation Notes
 
-### Week [X] Progress
-
-[What you built this week, challenges faced, decisions made]
-
-### Week [Y] Progress
-
-[Continue documenting as you work]
+Fixed in two stages. 
+**First** lowered BadAttrArg (error 3501) from StrictLevel::True to StrictLevel::False in core/errors/rewriter.h, so attr_reader :'foo-bar' reports an error even in # typed: false files. 
+**Second** exposed the existing validAttrName() function from its anonymous namespace as a public ASTUtil static method (rewriter/util/Util.h, rewriter/util/Util.cc),
+then called it from parseProp in rewriter/Prop.cc after extracting the symbol name — returning nullopt on invalid input. This causes const :'foo-bar', Integer to report a BadAttrArg error at any typed level.
+Files modified: `core/errors/rewriter.h`, `rewriter/util/Util.cc`, `rewriter/util/Util.h`, `rewriter/Prop.cc`
 
 ### Code Changes
 
-- **Files modified:** [List]
-- **Key commits:** [Links to important commits]
-- **Approach decisions:** [Why you chose certain approaches]
+ - Branch: https://github.com/prnvjn/sorbet/tree/fix-issue-6315-invalid-prop-attr-name
+ - Commit 1 : https://github.com/prnvjn/sorbet/commit/066c3e1a7
+ - Commit 2 : https://github.com/prnvjn/sorbet/commit/79fdd88ab
+
+
 
 ---
 
