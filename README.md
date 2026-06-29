@@ -199,11 +199,11 @@ Files modified: `core/errors/rewriter.h`, `rewriter/util/Util.cc`, `rewriter/uti
 
 **PR Link:**  https://github.com/sorbet/sorbet/pull/10413 
 
-**PR Description:** Fixes sorbet/sorbet#6315 — Sorbet was silent when prop/const/attr_reader received an invalid method name (e.g. :'foo-bar'), even though Ruby rejects such names at runtime. The change:
+**PR Description:** Fixes sorbet/sorbet#6315 — Sorbet was silent when `prop/const/attr_reader` received an invalid method name (e.g. :'`foo-bar`'), even though Ruby rejects such names at runtime. The change:
 
-1. Hoists validAttrName out of an anonymous namespace into ASTUtil (rewriter/util/Util.{cc,h}) so it can be shared.
-2. Calls validAttrName from parseProp (rewriter/Prop.cc) — prop/const names were previously never validated; invalid ones now error and are rejected before any accessors are generated.
-3. Lowers BadAttrArg (3501) from StrictLevel::True to StrictLevel::False (core/errors/rewriter.h) so these errors surface in # typed: false files, since an invalid method name is a structural/runtime error rather than a type error.
+1. Hoists `validAttrName` out of an anonymous namespace into ASTUtil (`rewriter/util/Util.{cc,h}`) so it can be shared.
+2. Calls `validAttrName` from parseProp (`rewriter/Prop.cc`) — `prop/const` names were previously never validated; invalid ones now error and are rejected before any accessors are generated.
+3. Lowers `BadAttrArg (3501)` from `StrictLevel::True` to `StrictLevel::False` (core/errors/rewriter.h) so these errors surface in `# typed: false` files, since an invalid method name is a structural/runtime error rather than a type error.
 
 Includes new tests for invalid attr/prop/const names at # typed: false, plus updates to two existing tests that depended on the old unvalidated behavior. User-visible: existing # typed: false files containing such names will newly report errors.
 
