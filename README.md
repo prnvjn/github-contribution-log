@@ -5,7 +5,7 @@
 **Contribution Number:** [1]  
 **Student:** [Pranav]  
 **Issue:** [[GitHub issue link](https://github.com/sorbet/sorbet/issues/6315)]  
-**Status:** [Phase IV]
+**Status:** [Phase IV  — Review in progress; reviewer feedback addressed]
 
 ---
 
@@ -190,6 +190,8 @@ Files modified: `core/errors/rewriter.h`, `rewriter/util/Util.cc`, `rewriter/uti
  - Branch: https://github.com/prnvjn/sorbet/tree/fix-issue-6315-invalid-prop-attr-name
  - Commit 1 : https://github.com/prnvjn/sorbet/commit/066c3e1a7
  - Commit 2 : https://github.com/prnvjn/sorbet/commit/79fdd88ab
+ - df12fc57a — Update rewriter tests for prop/attr name validation
+ - 9d9a2d3eb — Fix comments suggested by reviewer
 
 
 
@@ -207,9 +209,13 @@ Files modified: `core/errors/rewriter.h`, `rewriter/util/Util.cc`, `rewriter/uti
 
 Includes new tests for invalid attr/prop/const names at # typed: false, plus updates to two existing tests that depended on the old unvalidated behavior. User-visible: existing # typed: false files containing such names will newly report errors.
 
+Current Status: Review in progress — one round of reviewer feedback received and addressed (see Maintainer Feedback below).
 
 **Maintainer Feedback:**
-PR opened and posted in the Sorbet #internals Slack channel with a heads-up and a request to start CI (community PRs don't auto-run CI). No maintainer feedback received yet.
+
+ |  Date    | Reviewer | Feedback | Student Response |  Commit  |
+ |----------|----------|--------|--------|----------|
+| 2026-06-29| @jez    | Inline comment on rewriter/util/Util.h: suggested changing the doc comment for validAttrName from triple-slash /// (Doxygen-style) to regular // comments, and rewording from  "Returns true if name is a valid Ruby method name…" to "Approximates the validations that attr_reader does for attribute names." to better match the codebase's comment style.     | Agreed with the suggestion; applied it   directly. Replied: "Hi @jez fixed the comments"      | 9d9a2d3eb|
 
 **Status:** [Awaiting review]
 
@@ -219,20 +225,21 @@ PR opened and posted in the Sorbet #internals Slack channel with a heads-up and 
 
 ### Technical Skills Gained
 
-[What you learned technically]
+This issue gave me hands-on experience with how a production-grade C++ compiler (Sorbet) structures its rewriting pipeline. Specifically, I learned how Sorbet's `StrictLevel` enum gates errors to particular `# typed:` levels — and crucially, how to recognize when an error belongs at `StrictLevel::False` (a structural invariant Ruby enforces at runtime) versus `StrictLevel::True` (a type error only meaningful in typed files). I also got comfortable with C++ anonymous namespaces: I'd read about them before but had never refactored one into a public static method across a header/implementation pair in a real codebase. Finally, reading how `parseProp ` constructs its return value and where to inject a validation call gave me a concrete mental model of how rewriters in a compiler pipeline process AST nodes.
 
 ### Challenges Overcome
 
-[What was hard and how you solved it]
+The hardest part was diagnosing that there were two separate root causes rather than one. My first instinct was to just lower the `StrictLevel`, but running the reproduction case showed `const :'foo-bar'` still produced no error — because `parseProp` never called any validation at all. Realizing that `validAttrName` already existed but was locked in an anonymous namespace was the turning point: the fix became "expose it, then call it" rather than "write new logic." The second challenge was discovering that two existing test files (`prop_duplicated.rb` and `quoted_symbol_error.rb`) had test expectations that assumed the old unvalidated behavior. I had to update their `.exp` files after understanding why those cases changed — a good reminder to read test expectations carefully before assuming a green run means no regressions.
 
 ### What I'd Do Differently Next Time
 
-[Reflection on your process]
+I would post in Sorbet's #internals Slack channel before opening the PR rather than after. The CONTRIBUTING.md calls this out specifically for StrictLevel changes (maintainers need to run an internal check against Stripe's codebase), and doing it after the fact meant the PR sat without CI running until I pinged. I'd also spend more time reading the project's comment style conventions before writing new doc comments — @jez's feedback was minor but entirely avoidable if I had grepped for how other public ASTUtil methods were documented.
 
 ---
 
 ## Resources Used
 
-- [Link to helpful documentation]
-- [Tutorial or Stack Overflow post that helped]
-- [GitHub issues or discussions that helped]
+- [Sorbet CONTRIBUTING.md](https://github.com/sorbet/sorbet/blob/master/CONTRIBUTING.md)
+- [Sorbet error handling page](https://sorbet.org/docs/error-reference)
+- Issue discussion #6315
+
