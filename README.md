@@ -1,15 +1,18 @@
-# Contribution [#]: [Issue Title]
+# Contribution [#3102]: Multiple API endpoints for courseDetails
 
-**Contribution Number:** [1 / 2 / 3]  
-**Student:** [Your Name]  
-**Issue:** [GitHub issue link]  
-**Status:** [Phase I / Phase II / Phase III / Phase IV] [In Progress / Complete]
+
+
+**Contribution Number:**  [2]   
+**Student:** Pranav Jain   
+**Issue:** [GitHub issue link](https://github.com/openedx/frontend-app-authoring/issues/3102)  
+**Status:** [Phase I] [completed]
 
 ---
 
 ## Why I Chose This Issue
 
-[1-2 paragraphs explaining why this issue interests you, how it matches your skills/learning goals, what you hope to learn]
+The frontend-app-authoring codebase currently has three separate API endpoints that all fetch essentially the same `course details` data: one in `course-outline/data/api.ts`, one in the top-level `data/api.ts`, and one in `schedule-and-details/data/api.ts`. 
+This duplication means the same information is fetched and maintained in multiple places, which increases the risk of inconsistencies and makes the codebase harder to maintain as changes need to be replicated across all three locations. I chose this issue because it's a well-scoped refactoring task that will help me learn how this frontend app's data layer is structured, while also giving me practice identifying and safely consolidating duplicated logic in a real production codebase.
 
 ---
 
