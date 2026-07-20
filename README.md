@@ -20,19 +20,28 @@ This duplication means the same information is fetched and maintained in multipl
 
 ### Problem Description
 
-[In your own words, what's broken or missing?]
+The course details functionality is implemented redundantly across the codebase. Instead of one shared piece of logic for fetching/updating course details, there are (at least) three separate API modules that each define similar or identical logic, leading to code duplication and inconsistency risk.
 
 ### Expected Behavior
-
-[What should happen?]
+There should be a single, shared API module (e.g. a common getCourseDetails / updateCourseDetails) that all features needing course details import and reuse, rather than each feature maintaining its own copy of the same logic.
 
 ### Current Behavior
+Course details logic is duplicated across three separate files:
 
-[What actually happens?]
+`src/course-outline/data/api.ts` (line 22)
+`src/data/api.ts` (line 5)
+`src/schedule-and-details/data/api.ts` (line 6)
+
+Per bradenmacdonald's clarification, the course-outline and schedule-and-details versions are effectively the same API and are true duplicates, while the one in src/data/api.ts is a genuinely different endpoint that just serves a similar role — so it may not be a straightforward one-to-one consolidation.
 
 ### Affected Components
 
-[Which parts of the codebase are involved?]
+`course-outline` feature (`src/course-outline/data/api.ts`)
+`schedule-and-details` feature (`src/schedule-and-details/data/api.ts`)
+Shared/global data layer (`src/data/api.ts`)
+No established convention yet exists in the repo for where shared cross-feature API code should live, so this fix will also involve a small architectural decision (module placement) alongside the actual dedup work.
+
+Related/overlapping work: PR #3136 by taimoor-ahmed-1, which touches the course details API but is believed to be focused on the backend endpoint rather than the Authoring frontend code 
 
 ---
 
