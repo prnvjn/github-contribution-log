@@ -5,7 +5,7 @@
 **Contribution Number:** [1]  
 **Student:** [Pranav]  
 **Issue:** [[GitHub issue link](https://github.com/sorbet/sorbet/issues/6315)]  
-**Status:** [Phase IV  — Review in progress; reviewer feedback addressed]
+**Status:** [Phase IV  — Merged]
 
 ---
 
@@ -217,7 +217,7 @@ Current Status: Review in progress — one round of reviewer feedback received a
  |----------|----------|--------|--------|----------|
 | 2026-06-29| @jez    | Inline comment on rewriter/util/Util.h: suggested changing the doc comment for validAttrName from triple-slash /// (Doxygen-style) to regular // comments, and rewording from  "Returns true if name is a valid Ruby method name…" to "Approximates the validations that attr_reader does for attribute names." to better match the codebase's comment style.     | Agreed with the suggestion; applied it   directly. Replied: "Hi @jez fixed the comments"      | 9d9a2d3eb|
 
-**Status:** [Awaiting review]
+**Status:** [Merged]
 
 ---
 
